@@ -223,6 +223,29 @@
     :straight t
     :hook ((prog-mode org-mode) . rainbow-delimiters-mode))
 
+(unless (or init/evil (not init/corfu))
+    (use-package smartparens
+        :straight t
+        :demand t
+        :bind (:map smartparens-mode-map
+	                ("C-c b r" . sp-rewrap-sexp)
+                    ("C-c b d" . sp-splice-sexp))
+        :config
+        (require 'smartparens-config)
+        (smartparens-global-mode t)
+        (sp-with-modes '(tex-mode
+                         latex-mode
+                         LaTeX-mode)
+                       (sp-local-pair "<<" ">>"
+                                      :unless '(sp-in-math-p)))))
+
+(when (or init/evil (not init/corfu))
+    (use-package evil-surround
+        :straight t
+        :after evil
+        :config
+        (global-evil-surround-mode 1)))
+
 (unless init/evil
     (defun comment-or-uncomment-region-or-line ()
         "Comments or uncomments the region or the current line."
@@ -268,6 +291,26 @@
                ("C-M-%" . my/vr/query-replace)
                ("C-c v m" . vr/mc-mark))))
 
+(unless init/evil
+    (use-package multiple-cursors
+        :straight t
+        :bind (("C-c m l" . mc/edit-lines)
+               ("C->" . mc/mark-next-like-this)
+               ("C-<" . mc/mark-previous-like-this)
+               ("C-c m a" . mc/mark-all-like-this))
+        :init
+        (setq mc/match-cursor-style nil)))
+
+(when init/evil
+    (use-package evil-mc
+        :straight t
+        :after evil
+        :config
+        (evil-define-key 'visual evil-mc-key-map
+            "A" #'evil-mc-make-cursor-in-visual-selection-end
+            "I" #'evil-mc-make-cursor-in-visual-selection-beg)
+        (global-evil-mc-mode 1)))
+
 (use-package crux
     :straight t
     :bind (("C-c I" . crux-find-user-init-file)
@@ -309,7 +352,7 @@
 
 (unless (version< emacs-version "28.1")
     (use-package ligature
-        :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
+        :straight t
         :config
         (ligature-set-ligatures
          'prog-mode
@@ -407,17 +450,17 @@
           `((
              (,(nerd-icons-sucicon "nf-custom-emacs" :height 1.0 :v-adjust 0.0)
               "Настройки"
-              "Открыть файл с настройками (init.el)"
+              "Открыть Org-файл с настройками (init.el)"
               (lambda (&rest _)
                   (find-file (concat (file-name-directory user-init-file) "init.org"))))
              (,(nerd-icons-faicon "nf-fa-github" :height 1.0 :v-adjust 0.0)
-              "dotfiles"
-              "Github с конфигурационными файлами"
-              (lambda (&rest _) (browse-url "https://github.com/vadim-zyamalov/dotfiles")))
+              "Профиль"
+              "Github-профиль"
+              (lambda (&rest _) (browse-url "https://github.com/vadim-zyamalov/")))
              (,(nerd-icons-faicon "nf-fa-github" :height 1.0 :v-adjust 0.0)
-              "emacs"
+              "Emacs-settings"
               "Github с настройками Emacs"
-              (lambda (&rest _) (browse-url "https://github.com/vadim-zyamalov/emacs")))
+              (lambda (&rest _) (browse-url "https://github.com/vadim-zyamalov/Emacs-settings")))
              ))
           dashboard-startupify-list '(dashboard-insert-banner
                                       dashboard-insert-newline
@@ -484,6 +527,19 @@
     :config
     (pulsar-global-mode t))
 
+(use-package zoom
+    :straight t
+    :init
+    (setq zoom-size '(0.618 . 0.618)
+          zoom-ignored-major-modes '(ess-r-mode
+                                     inferior-ess-r-mode
+                                     ess-rdired-mode)
+          zoom-ignored-buffer-names '("*R*"
+                                      "*R dired*"
+                                      "*R view*"))
+    :config
+    (zoom-mode))
+
 (use-package dimmer
     :straight t
     :init
@@ -497,7 +553,7 @@
 
 (use-package framemove
     :straight t
-    :after (hydra)
+    :after hydra
     :bind ("<f6>" . hydra-wind/body)
     :hydra (hydra-wind ()
                        "Moving between windows."
